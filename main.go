@@ -54,8 +54,7 @@ func main() {
 
 	// API Router
 	mux.Handle( // HomePage + RootDir for Logo / Index file etc.
-		"/app/",
-		apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
+		"/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
 	// mux.HandleFunc("POST /api/validate_chirp", chirpHandler) Disabled & Moved to Create Chirp Logic
 
@@ -66,6 +65,8 @@ func main() {
 	// Basic User Router
 	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 	mux.HandleFunc("POST /api/chirps", apiCfg.handlerCreateChirp)
+	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpsByID)
 
 	// Create Server assign Handler / Address
 	srv := &http.Server{
@@ -81,13 +82,14 @@ func main() {
 	log.Println("| Server Logo   | http://localhost:8080/app/assets/logo.png") // this is a bonus link
 	log.Println("| Server Health | http://localhost:8080/api/healthz")
 	log.Println("| Admin API ---")
-	log.Println("| List Users    | N/A") // Build this
-	log.Println("| List Chirps   | N/A") // Build this
+	log.Println("| List Users    | N/A")                                    // Build this
+	log.Println("| List Chirps   | GET http://localhost:8080/admin/chirps") // Build this
 	log.Println("| Check Metrics | http://localhost:8080/admin/metrics")
 	log.Println("| Reset All     | http://localhost:8080/admin/reset")
 	log.Println("| Chirp / User API ---")
 	log.Println("| Create User   | http://localhost:8080/api/users")
-	log.Println("| Create Chirp  | http://localhost:8080/api/chirps")
+	log.Println("| Create Chirp  | POST http://localhost:8080/api/chirps")
+	log.Println("| GetChirp by ID| http://localhost:8080/api/chirps/{chirpID}")
 	log.Println("----")
 	log.Println("| Reminder to check browser caching and restart the server after any changes")
 	log.Fatal(srv.ListenAndServe())
