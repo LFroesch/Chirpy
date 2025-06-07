@@ -1,7 +1,5 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 CREATE TABLE chirps (
     id UUID PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,

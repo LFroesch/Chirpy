@@ -2,23 +2,28 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
+	"github.com/LFroesch/Chirpy/internal/auth"
+	"github.com/LFroesch/Chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
+	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	Email       string    `json:"email"`
+	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	// 1. Parse the request body
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	type response struct {
 		User
@@ -33,8 +38,18 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// 2.1 Hash the password
+	hashedPassword, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error hashing password")
+		return
+	}
+	log.Printf("Attempting to create user with email: %s", params.Email)
 	// 3. Call the CreateUser function
-	user, err := cfg.db.CreateUser(r.Context(), params.Email)
+	user, err := cfg.db.CreateUser(r.Context(), database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error creating user")
 		return

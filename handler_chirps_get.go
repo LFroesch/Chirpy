@@ -3,27 +3,49 @@ package main
 import (
 	"net/http"
 
+	"github.com/LFroesch/Chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
-	dbChirps, err := cfg.db.GetChirps(r.Context())
+	sortOrder := r.URL.Query().Get("sort")
+	var dbChirps []database.Chirp
+	var err error
+
+	if sortOrder == "desc" {
+		dbChirps, err = cfg.db.GetChirpsDesc(r.Context())
+	} else {
+		dbChirps, err = cfg.db.GetChirps(r.Context())
+	}
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve chirps")
 		return
 	}
-
 	chirps := []Chirp{}
-	for _, dbChirp := range dbChirps {
-		chirps = append(chirps, Chirp{
-			ID:        dbChirp.ID,
-			CreatedAt: dbChirp.CreatedAt,
-			UpdatedAt: dbChirp.UpdatedAt,
-			UserID:    dbChirp.UserID,
-			Body:      dbChirp.Body,
-		})
+	s := r.URL.Query().Get("author_id")
+	if s != "" {
+		for _, dbChirp := range dbChirps {
+			if dbChirp.UserID.String() == s {
+				chirps = append(chirps, Chirp{
+					ID:        dbChirp.ID,
+					CreatedAt: dbChirp.CreatedAt,
+					UpdatedAt: dbChirp.UpdatedAt,
+					UserID:    dbChirp.UserID,
+					Body:      dbChirp.Body,
+				})
+			}
+		}
+	} else {
+		for _, dbChirp := range dbChirps {
+			chirps = append(chirps, Chirp{
+				ID:        dbChirp.ID,
+				CreatedAt: dbChirp.CreatedAt,
+				UpdatedAt: dbChirp.UpdatedAt,
+				UserID:    dbChirp.UserID,
+				Body:      dbChirp.Body,
+			})
+		}
 	}
-
 	respondWithJSON(w, http.StatusOK, chirps)
 }
 

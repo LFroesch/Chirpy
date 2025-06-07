@@ -7,4 +7,4 @@ reset-db: migrate-down migrate-up
 psql:
 	psql "postgres://postgres:postgres@localhost:5432/chirpy"
 
-asdf:
+# don't forget to use make <command> to run the commands
